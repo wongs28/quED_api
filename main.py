@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 import matplotlib.pyplot as plt
 import numpy as np
 import requests
@@ -8,7 +9,7 @@ import time
 # Fixed IP address of the device
 DEVICE_IP = "http://128.95.31.28"  # Change this to your device's IP
 
-vari = {
+parameters = {
     'action': ['get', 'set'],
     'param': {'ild': None, 'pm1': None, 'pm2': None, 'int': None, 'cnt': None, 'mref': None}
 }
@@ -32,6 +33,14 @@ def check(response):
         print(response.status_code)
 
 
+def find_string(response, search_string):
+    soup = BeautifulSoup(response.text, 'html.parser')
+    for br_tag in soup.find_all('br'):
+        previous_sibling = br_tag.find_previous_sibling(string=True)
+        if previous_sibling and search_string in previous_sibling:
+            return previous_sibling.strip()
+
+
 def polarization_correlation():
     cnt_rates = [[] for _ in range(4)]
     i = 0
@@ -50,7 +59,7 @@ def polarization_correlation():
                 cnt = requests.get(build_url('get', 'cnt'))
                 time.sleep(0.1)
                 check(cnt)
-                # append count rate to list
+                cnt_rates.append(find_string(cnt, '01:')[4:])
             i = i + 1
     except requests.exceptions.RequestException as e:
         print(e)
@@ -83,6 +92,7 @@ def plot_curves(x_data, y_data):
 
 if __name__ == '__main__':
     all_counts = polarization_correlation()
+    print(all_counts)
     interp = []
     for data in all_counts:
         x = np.arange(0, 360, 10)
