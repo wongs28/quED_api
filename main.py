@@ -26,6 +26,14 @@ def set_zero(pm):
     return requests.post(build_url('set', pm, 0))
 
 
+def get_param(param):
+    return requests.get(build_url('get', param))
+
+
+def set_param(param, value):
+    return requests.post(build_url('set', param, value))
+
+
 def check(response):
     if response.status_code == 200:
         print(response.text)
@@ -47,17 +55,17 @@ def polarization_correlation(pm1_angles, pm2_angles):
     try:
         set_zero('pm1')
         set_zero('pm2')
-        time.sleep(0.1)
+        time.sleep(1.0)
         for pm1 in pm1_angles:
             set_pm1 = requests.post(build_url('set', 'pm1', pm1))
-            time.sleep(0.1)
+            time.sleep(1.0)
             check(set_pm1)
 
             for pm2 in pm2_angles:
                 set_pm2 = requests.post(build_url('set', 'pm2', pm2))
                 check(set_pm2)
+                time.sleep(1.0)
                 cnt = requests.get(build_url('get', 'cnt'))
-                time.sleep(0.05)
                 check(cnt)
                 cnt_rates[i].append(float(find_string(cnt, '01:')[4:]))
             i = i + 1
@@ -94,18 +102,27 @@ def plot_curves(ax, x_data, y_data):
 
 
 if __name__ == '__main__':
+    # angles = np.arange(0, 50, 5)
+    # for angle in angles:
+    #     response = set_param('pm2', angle)
+    #     while response.status_code != 200:
+    #         time.sleep(0.1)
+    #     print(response.text)
     interp = []
     pol1_angles = [0, -45, 90, 45]
-    pol2_angles = np.arange(0, 362, 2)
+    pol2_angles = np.arange(0, 370, 10)
     all_counts = polarization_correlation(pol1_angles, pol2_angles)
     fig1, ax1 = plt.subplots(1, 1)
     fig2, ax2 = plt.subplots(1, 1)
+
     for data in all_counts:
         plot_curves(ax1, pol2_angles, data)
         x_new = np.arange(0, 360, 0.5)
         interp.append(CubicSpline(pol2_angles, data))
         plot_curves(ax2, x_new, CubicSpline(pol2_angles, data)(x_new))
 
-    S = calculate_S(interp[0], interp[1], interp[2], interp[3], 22.5, 67.5, 90)
-    print(S)
+    S1 = calculate_S(interp[0], interp[1], interp[2], interp[3], 22.5, 67.5, 90)
+    S2 = calculate_S(interp[0], interp[1], interp[2], interp[3], 22.5, 67.5, -90)
+    print(S1, S2)
     plt.show()
+
