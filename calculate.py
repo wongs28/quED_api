@@ -7,7 +7,7 @@ from scipy.interpolate import CubicSpline
 if __name__ == '__main__':
     with open('count_rates.csv', 'r') as file:
         all_data = csv.reader(file)
-    
+
     counts = []
     for data in all_data[1:]:
         counts.append(CubicSpline(all_data[0], data))
