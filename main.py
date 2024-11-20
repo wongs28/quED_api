@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import csv
-import json
 import matplotlib.pyplot as plt
 import numpy as np
 import requests
@@ -73,49 +72,31 @@ def polarization_correlation(pm1_angles, pm2_angles):
     return cnt_rates
 
 
-def calculate_E(a, a_perp, b, b_perp):
-    norm = a(b) + a(b_perp) + a_perp(b) + a_perp(b_perp)
-    return (a(b) - a(b_perp) - a_perp(b) + a_perp(b_perp)) / norm
-
-
-def calculate_S(h_counts, n_counts, v_counts, p_counts, b, bp, perp):
-    E_ab = calculate_E(h_counts, v_counts, b, b+perp)
-    E_abp = calculate_E(h_counts, v_counts, bp, bp+perp)
-    E_apb = calculate_E(p_counts, n_counts, b, b+perp)
-    E_apbp = calculate_E(p_counts, n_counts, bp, bp+perp)
-    S1 = -E_ab + E_abp + E_apb + E_apbp
-    S2 = E_ab - E_abp + E_apb + E_apbp
-    S3 = E_ab + E_abp - E_apb + E_apbp
-    S4 = E_ab + E_abp + E_apb - E_apbp
-    return S1, S2, S3, S4
-
-
-def plot_curves(ax, x_data, y_data):
+def plot_curves(ax, x_data, y_data, labels):
     ax.plot(x_data, y_data)
     ax.set_title('Polarization Correlation Curve')
     ax.set_xlabel('Polarizer 2 Angle')
     ax.set_ylabel('Coincidence Count Rate [/1000ms]')
     ax.grid(True)
-    ax.legend(['H', '-45', 'V', '+45'], title="Polarizer 1 Angle")
+    ax.legend(labels, title="Polarizer 1 Angle")
 
 
 if __name__ == '__main__':
-    splines = []
-    pol1_angles = [0, -45, 90, 45]
-    pol2_angles = np.linspace(0, 360, 17)
+    pol1_angles = [0, 45, 90, 135]
+    pol2_angles = np.linspace(0, 180, 9)
     all_counts = polarization_correlation(pol1_angles, pol2_angles)
     fig1, ax1 = plt.subplots(1, 1)
     fig2, ax2 = plt.subplots(1, 1)
 
     for data in all_counts:
-        plot_curves(ax1, pol2_angles, data)
-        x_new = np.arange(0, 360, 0.5)
+        plot_curves(ax1, pol2_angles, data, pol1_angles)
+        x_new = np.arange(0, 180, 0.5)
         f_new = CubicSpline(pol2_angles, data)
-        plot_curves(ax2, x_new, f_new(x_new))
+        plot_curves(ax2, x_new, f_new(x_new), pol1_angles)
 
-    all_data = np.array(pol2_angles, all_counts)
+    all_data = np.vstack([pol2_angles, all_counts])
     with open('coin_data.csv', mode='w', newline='') as file:
-        coin_data = csv.writer(file)
-        coin_data.writerows(all_data)
+        writer = csv.writer(file)
+        writer.writerows(all_data)
 
     plt.show()
