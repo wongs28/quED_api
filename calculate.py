@@ -66,10 +66,23 @@ if __name__ == '__main__':
         counts.append(f_new)
         plot_curves(ax3, x_new, f_new(x_new), [0, 45, 90, 135])
 
-    S1 = calculate_S(counts[0], counts[1], counts[2], counts[3], 22.5, 67.5, 90)
-    S2 = calculate_S(counts[0], counts[1], counts[2], counts[3], 22.5, 67.5, -90)
-    print(S1, S2, sep='\n')
+    # calculate using interpolated data
+    S = calculate_S(counts[0], counts[1], counts[2], counts[3], 22.5, 67.5, 90)
+    print(S)
+
+    # calculate manually using measured data
+    test_cnt = [[] for _ in range(4)]
+    i = 0
     for count in counts:
         for angle in [22.5, 67.5, 112.5, 157.5]:
-            print(count(angle))
+            test_cnt[i].append(count(angle))
+        i = i + 1
+    print(test_cnt)
+    test_e = []
+    for i in range(2):
+        test_e.append((test_cnt[i][0] - test_cnt[i][2] - test_cnt[i+2][0] + test_cnt[i+2][2]) / (
+                test_cnt[i][0] + test_cnt[i][2] + test_cnt[i+2][0] + test_cnt[i+2][2]))
+        test_e.append((test_cnt[i][1] - test_cnt[i][3] - test_cnt[i+2][1] + test_cnt[i+2][3]) / (
+                    test_cnt[i][1] + test_cnt[i][3] + test_cnt[i + 2][1] + test_cnt[i + 2][3]))
+    print(test_e)
     plt.show()
